@@ -11,6 +11,7 @@ from utils.Scaler import ScalerPerAudio, Scaler
 import os
 import inspect
 import logging
+#import ipdb
 
 # Extraction of datasets
 def get_dfs(
@@ -54,6 +55,7 @@ def get_dfs(
         audio_synthetic_ss = path_dict["synthetic_ss"]
 
     # initialization of the dataset
+    """
     weak_df = desed_dataset.initialize_and_get_df(
         tsv_path=path_dict["tsv_path_weak"],
         audio_dir_ss=audio_weak_ss,
@@ -69,7 +71,7 @@ def get_dfs(
     )
 
     # Event if synthetic not used for training, used on validation purpose
-    """
+    
     synthetic_df = desed_dataset.initialize_and_get_df(
         tsv_path=path_dict["tsv_path_synth"],
         audio_dir_ss=audio_synthetic_ss,
@@ -79,10 +81,12 @@ def get_dfs(
     )
     """
 
+    #ipdb.set_trace()
     train_synth_df = desed_dataset.initialize_and_get_df(
         tsv_path=path_dict["tsv_path_train_synth"],
+        audio_dir=path_dict["audio_train_synth"],
         audio_dir_ss=audio_synthetic_ss,
-        nb_files=nb_files,
+        nb_files=2500,
         download=False,
         save_features=save_features,
     )
@@ -91,17 +95,17 @@ def get_dfs(
         tsv_path=path_dict["tsv_path_valid_synth"],
         audio_dir=path_dict["audio_valid_synth"],
         audio_dir_ss=audio_synthetic_ss,
-        nb_files=nb_files,
+        nb_files=1000,
         download=False,
         save_features=save_features,
     )
 
     # divide weak label for training and validation
-    filenames_train = weak_df.filename.drop_duplicates().sample(
-        frac=0.9, random_state=26
-    )
-    train_weak_df = weak_df[weak_df.filename.isin(filenames_train)]
-    valid_weak_df = weak_df.drop(train_weak_df.index).reset_index(drop=True)
+    #filenames_train = weak_df.filename.drop_duplicates().sample(
+     #   frac=0.9, random_state=26
+    #)
+    #train_weak_df = weak_df[weak_df.filename.isin(filenames_train)]
+    #valid_weak_df = weak_df.drop(train_weak_df.index).reset_index(drop=True)
 
     # TODO: Make the system already ready for the evaluation set so to make things easier
     # dev_test dataset
@@ -160,11 +164,11 @@ def get_dfs(
     """
     # new split of data
     data_dfs = {
-        "weak": train_weak_df,
-        "unlabel": unlabel_df,
+        #"weak": train_weak_df,
+        #"unlabel": unlabel_df,
         "train_synthetic": train_synth_df,
         "valid_synthetic": valid_synth_df,
-        "valid_weak": valid_weak_df,
+        #"valid_weak": valid_weak_df,
         "validation": validation_df,  # TODO: Proper name for the dataset
     }
 
@@ -253,19 +257,23 @@ def get_compose_transforms(datasets, scaler_type, max_frames, add_axis_conv, noi
     if scaler_type == "dataset":
         transforms = get_transforms(frames=max_frames, add_axis=add_axis_conv)
 
-        weak_data = datasets["weak"]
-        unlabel_data = datasets["unlabel"]
+        #weak_data = datasets["weak"]
+        #unlabel_data = datasets["unlabel"]
         train_synth_data = datasets["synthetic"]
 
-        weak_data.transforms = transforms
-        unlabel_data.transforms = transforms
+        #weak_data.transforms = transforms
+        #unlabel_data.transforms = transforms
         train_synth_data.transforms = transforms
 
         # scaling, only on real data since that's our final goal and test data are real
         scaler_args = []
         scaler = Scaler()
+        #scaler.calculate_scaler(
+        #    ConcatDataset([weak_data, unlabel_data, train_synth_data]), 
+        #    ext
+        #)
         scaler.calculate_scaler(
-            ConcatDataset([weak_data, unlabel_data, train_synth_data]), 
+            ConcatDataset([train_synth_data]), 
             ext
         )
     else:

@@ -178,7 +178,7 @@ def update_state(
     epoch,
     valid_synth_f1,
     psds_m_f1,
-    valid_weak_f1,
+    #valid_weak_f1,
     state=None,
 ):
     """
@@ -198,7 +198,7 @@ def update_state(
     state["epoch"] = epoch
     state["valid_metric"] = valid_synth_f1
     state["valid_f1_psds"] = psds_m_f1
-    state["valid_weak_f1"] = valid_weak_f1
+    #state["valid_weak_f1"] = valid_weak_f1
 
     return state
 
@@ -357,23 +357,23 @@ def train(
                 )
 
         # Strong BCE loss
-        if mask_strong is not None:
+        #if mask_strong is not None:
 
-            strong_class_loss = class_criterion(
-                strong_pred[mask_strong], target[mask_strong]
-            )
+        strong_class_loss = class_criterion(
+            strong_pred, target
+        )
 
-            meters.update("Strong loss", strong_class_loss.item())
+        meters.update("Strong loss", strong_class_loss.item())
 
-            strong_ema_class_loss = class_criterion(
-                strong_pred_ema[mask_strong], target[mask_strong]
-            )
-            meters.update("Strong EMA loss", strong_ema_class_loss.item())
+        strong_ema_class_loss = class_criterion(
+            strong_pred_ema, target
+        )
+        meters.update("Strong EMA loss", strong_ema_class_loss.item())
 
-            if loss is not None:
-                loss += strong_class_loss
-            else:
-                loss = strong_class_loss
+        if loss is not None:
+            loss += strong_class_loss
+        else:
+            loss = strong_class_loss
 
         # Teacher-student consistency cost
         if ema_model is not None:
