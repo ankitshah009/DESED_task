@@ -197,7 +197,8 @@ if __name__ == "__main__":
         labels=config_params.classes,
         n_frames=config_params.max_frames // config_params.pooling_time_ratio,
     )
-    encod_func = many_hot_encoder.encode_strong_df
+
+    #encod_func = many_hot_encoder.encode_strong_df
 
     """
     weak_data = DataLoadDf(
@@ -234,7 +235,6 @@ if __name__ == "__main__":
     if config_params.year == "2021":
         train_synth_data = DataLoadDf(
             df=dfs["train_synthetic"],
-            encode_function=encod_func,
             sample_rate=config_params.sample_rate,
             n_window=config_params.n_window,
             hop_size=config_params.hop_size,
@@ -248,7 +248,6 @@ if __name__ == "__main__":
     else:
         train_synth_data = DataLoadDf(
             df=dfs["train_synthetic"],
-            encode_function=encod_func,
             sample_rate=config_params.sample_rate,
             n_window=config_params.n_window,
             hop_size=config_params.hop_size,
@@ -268,6 +267,7 @@ if __name__ == "__main__":
         "synthetic": train_synth_data,
     }
 
+    ratio = float(config_params.sample_rate) / float(config_params.hop_size) / float(config_params.pooling_time_ratio)
     
     transforms, transforms_valid, scaler, scaler_args = get_compose_transforms(
         datasets=training_dataset,
@@ -275,6 +275,7 @@ if __name__ == "__main__":
         max_frames=config_params.max_frames,
         add_axis_conv=config_params.add_axis_conv,
         noise_snr=config_params.noise_snr,
+        encode_label_kwargs={"many_hot_encoder": many_hot_encoder, "encode_type": "strong", "ratio_s_to_frames": ratio},
         #ext="s" if config_params.year == "2020" else "s_new"
         ext="r" #reduced
     )
@@ -290,7 +291,6 @@ if __name__ == "__main__":
     if config_params.year == "2021":
         valid_synth_data = DataLoadDf(
             df=dfs["valid_synthetic"],
-            encode_function=encod_func,
             transforms=transforms_valid,
             return_indexes=True,
             in_memory=config_params.in_memory,
@@ -307,7 +307,6 @@ if __name__ == "__main__":
     else:
         valid_synth_data = DataLoadDf(
             df=dfs["valid_synthetic"],
-            encode_function=encod_func,
             transforms=transforms_valid,
             return_indexes=True,
             in_memory=config_params.in_memory,
@@ -569,10 +568,9 @@ if __name__ == "__main__":
     # VALIDATION
     # ##############
 
-    #ipdb.set_trace()
     if config_params.save_best:
         #model_fname = os.path.join(saved_model_dir, "baseline_best")
-        model_fname = os.path.join(saved_model_dir, "baseline_epoch_197")
+        model_fname = os.path.join(saved_model_dir, "baseline_epoch_83")
         state = torch.load(model_fname)
 
         if model_type == "conf":
@@ -592,6 +590,7 @@ if __name__ == "__main__":
     model.eval()
 
     transforms_valid = get_transforms(
+        encode_label_kwargs={"many_hot_encoder": many_hot_encoder, "encode_type": "strong", "ratio_s_to_frames": ratio},
         frames=config_params.max_frames,
         scaler=scaler,
         add_axis=config_params.add_axis_conv,
@@ -601,7 +600,6 @@ if __name__ == "__main__":
     
     validation_data = DataLoadDf(
         df=dfs["train_synthetic"],  # change the name of the synthetic
-        encode_function=encod_func,
         transforms=transforms_valid,
         return_indexes=True,
         sample_rate=config_params.sample_rate,

@@ -199,8 +199,9 @@ class ToTensor(Transform):
         Apply the transformation on data
         Args:
             data: np.array, the data to be modified
+        
         Returns:
-            res_data: np.array, The transformed data
+            np.array, The transformed data
         """
         res_data = torch.from_numpy(data).float()
         if self.unsqueeze_axis is not None:
@@ -271,6 +272,66 @@ class CombineChannels(Transform):
             sources[indexes_sorted[-1]] += sources_to_add
         return np.concatenate((mix, sources[indexes_sorted[2:]]))
 
+class EncodeLabel(Transform):
+
+    def __init__(self, many_hot_encoder, encode_type="strong", ratio_s_to_frames=None):
+        """
+        Initialization of EncodeLabel instance
+        Args:
+            many_hot_encoder: 
+            encode_type: 
+            ratio_s_to_frames
+        """
+        self.many_hot_encoder = many_hot_encoder
+        self.encode_type = encode_type
+
+        if self.encode_type != "strong" and not ratio_s_to_frames:
+            raise NotImplementedError(f"Cannot change seconds to frames when encode_type is not strong." 
+                f"Current encode_type: {self.encode_type}, ratio_s_to_frames: {ratio_s_to_frames}")
+        else:
+            self.ratio_s_to_frames = ratio_s_to_frames
+
+    def convert_s_to_frames(self, label):
+
+        
+        if len(label) > 0:
+            new_label = label.copy()
+            new_label.onset = (
+                new_label.onset * self.ratio_s_to_frames
+            ).round()
+            
+            new_label.offset = (
+                new_label.offset * self.ratio_s_to_frames
+            ).round()
+
+        return new_label
+
+    def transform_data(self, data):
+        """
+        Apply the transformation on data
+        Args:
+            data: np.array, the data to be modified
+        Returns:
+            np.array, The transformed data
+        """
+        return data
+
+    def transform_label(self, label):
+        if self.encode_type == "weak":
+            encoded_label = self.many_hot_encoder.encode_weak(label)
+        elif self.encode_type == "strong":
+            res_label = label
+            if self.ratio_s_to_frames is not None:
+                res_label = self.convert_s_to_frames(label)
+
+            encoded_label = self.many_hot_encoder.encode_strong(res_label)
+        else:
+            raise NotImplementedError(f"Not implemented encode type: {self.encode_type}")
+
+        return encoded_label
+            
+    
+
 
 class Compose(object):
     """
@@ -313,11 +374,14 @@ class Compose(object):
         return format_string
 
 
+
+
 def get_transforms(
     frames=None,
     scaler=None,
     add_axis=0,
     noise_dict_params=None,
+    encode_label_kwargs=None,
     combine_channels_args=None,
 ):
     """
@@ -336,6 +400,8 @@ def get_transforms(
     """
     transf = []
     unsqueeze_axis = None
+
+    transf.append(EncodeLabel(**encode_label_kwargs))
 
     if add_axis is not None:
         unsqueeze_axis = add_axis

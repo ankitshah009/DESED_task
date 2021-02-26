@@ -30,7 +30,6 @@ class DataLoadDf(Dataset):
     def __init__(
         self,
         df,
-        encode_function=None,
         transforms=None,
         return_indexes=False,
         in_memory=False,
@@ -55,7 +54,6 @@ class DataLoadDf(Dataset):
                 "feature_filename", "event_labels" (weak dataset)
                 "feature_filename", "onset", "offset", "event_label" (synthetic dataset)
                 (?, maybe ot the feature_filename anymore)
-            encode_function: function(), function which encode labels
             transform: function(), (Default value = None), function or composition of transforms
                         to be applied to the sample (pytorch transformations)
             in_memory: whether to save the features is memory or not
@@ -64,7 +62,6 @@ class DataLoadDf(Dataset):
         """
 
         self.df = df
-        self.encode_function = encode_function
         self.transforms = transforms
         self.return_indexes = return_indexes
         self.filenames = df.filename.drop_duplicates()
@@ -184,12 +181,14 @@ class DataLoadDf(Dataset):
                 )
         if index == 0:
             logger.debug("label to encode: {}".format(label))
-        if self.encode_function is not None:
+
+        #TODO: CHANGE
+        #if self.encode_function is not None:
             # labels are a list of string or list of list [[label, onset, offset]]
-            y = self.encode_function(label)
-        else:
-            y = label
-        sample = features, y
+        #    y = self.encode_function(label)
+        #else:
+        #    y = label
+        sample = features, label
         return sample
 
     def __getitem__(self, index):

@@ -53,7 +53,7 @@ class ManyHotEncoder:
                 y[i] = 1
         return y
 
-    def encode_strong_df(self, label_df):
+    def encode_strong(self, label_df):
         """
             Encode a list (or pandas Dataframe or Serie) of strong labels, they correspond to a given filename
 

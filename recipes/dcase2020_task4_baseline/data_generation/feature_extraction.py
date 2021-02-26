@@ -144,13 +144,13 @@ def get_dfs(
 
     # Put train_synth in frames so many_hot_encoder can work.
     # Not doing it for valid, because not using labels (when prediction) and event based metric expect sec.
-    train_synth_df.onset = (
-        train_synth_df.onset * sample_rate // hop_size // pooling_time_ratio
-    )
-    train_synth_df.offset = (
-        train_synth_df.offset * sample_rate // hop_size // pooling_time_ratio
-    )
-    log.debug(valid_synth_df.event_label.value_counts())
+    # train_synth_df.onset = (
+    #     train_synth_df.onset * sample_rate // hop_size // pooling_time_ratio
+    # )
+    # train_synth_df.offset = (
+    #     train_synth_df.offset * sample_rate // hop_size // pooling_time_ratio
+    # )
+    # log.debug(valid_synth_df.event_label.value_counts())
 
     """
     data_dfs = {
@@ -231,7 +231,7 @@ def get_dataset(
     return desed_dataset, dfs
 
 
-def get_compose_transforms(datasets, scaler_type, max_frames, add_axis_conv, noise_snr, ext):
+def get_compose_transforms(datasets, scaler_type, max_frames, add_axis_conv, noise_snr, encode_label_kwargs, ext):
     """
     The function performs all the operation needed to normalize the dataset.
 
@@ -255,7 +255,7 @@ def get_compose_transforms(datasets, scaler_type, max_frames, add_axis_conv, noi
     )
 
     if scaler_type == "dataset":
-        transforms = get_transforms(frames=max_frames, add_axis=add_axis_conv)
+        transforms = get_transforms(encode_label_kwargs=encode_label_kwargs, frames=max_frames, add_axis=add_axis_conv)
 
         #weak_data = datasets["weak"]
         #unlabel_data = datasets["unlabel"]
@@ -281,6 +281,7 @@ def get_compose_transforms(datasets, scaler_type, max_frames, add_axis_conv, noi
         scaler = ScalerPerAudio(*scaler_args)
 
     transforms = get_transforms(
+        encode_label_kwargs=encode_label_kwargs,
         frames=max_frames,
         scaler=scaler,
         add_axis=add_axis_conv,
@@ -288,6 +289,7 @@ def get_compose_transforms(datasets, scaler_type, max_frames, add_axis_conv, noi
     )
 
     transforms_valid = get_transforms(
+        encode_label_kwargs=encode_label_kwargs,
         frames=max_frames,
         scaler=scaler,
         add_axis=add_axis_conv,
