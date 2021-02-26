@@ -85,7 +85,7 @@ if __name__ == "__main__":
         __name__ + "/" + inspect.currentframe().f_code.co_name,
         terminal_level=config_params.terminal_level,
     )
-    logger.info("Baseline 2020 - New split dataset")
+    logger.info("Baseline 2020")
     logger.info(f"Starting time: {datetime.datetime.now()}")
 
     # parser -> TODO: move to another module
@@ -141,14 +141,14 @@ if __name__ == "__main__":
     else:
         if config_params.year == "2020":
             if model_type == "crnn":
-                add_dir_model_name = "_with_synthetic_crnn_s" 
+                add_dir_model_name = "_with_synthetic_crnn_new" 
             elif model_type == "conf":
                 add_dir_model_name = "_with_synthetic_conf_s"
             elif model_type == "tran":
                 add_dir_model_name = "_with_synthetic_tran"
         else:
             if model_type == "crnn":
-                add_dir_model_name = "_with_synthetic_crnn_new_r" 
+                add_dir_model_name = "_with_synthetic_crnn_new" 
             elif model_type == "conf":
                 add_dir_model_name = "_with_synthetic_conf_new_r"
             elif model_type == "tran":
@@ -243,10 +243,7 @@ if __name__ == "__main__":
             mel_f_max=config_params.mel_f_max,
             compute_log=config_params.compute_log,
             save_features=config_params.save_features,
-            filenames_folder=os.path.join(
-                config_params.audio_train_folder,
-                "synthetic2021_train/soundscapes",  # to change, to clean
-            ),
+            filenames_folder=config_params.audio_train_synth
         )
     else:
         train_synth_data = DataLoadDf(
@@ -305,9 +302,7 @@ if __name__ == "__main__":
             mel_f_max=config_params.mel_f_max,
             compute_log=config_params.compute_log,
             save_features=config_params.save_features,
-            filenames_folder=os.path.join(
-                config_params.audio_train_folder, "synthetic2021_validation/soundscapes"
-            ),
+            filenames_folder=config_params.audio_valid_synth
         )
     else:
         valid_synth_data = DataLoadDf(
@@ -445,6 +440,7 @@ if __name__ == "__main__":
     # TRAINING
     # ##############
 
+    """
     for epoch in range(config_params.n_epoch):
         model.train()
         model_ema.train()
@@ -502,15 +498,15 @@ if __name__ == "__main__":
             f"Psds ct: {psds_f1_valid}, +- {max(psds_f1_valid - lvps, hvps - psds_f1_valid)}"
         )
 
-        """
-        valid_weak_f1_pc = get_f_measure_by_class(
-            model, len(many_hot_encoder.labels), valid_weak_loader
-        )
-        valid_weak_f1 = np.mean(valid_weak_f1_pc)
-        logger.info(
-            f"\n ### Valid weak metric \n F1 per class: {valid_weak_f1_pc} \n Macro average: {valid_weak_f1}"
-        )
-        """
+        
+        #valid_weak_f1_pc = get_f_measure_by_class(
+        #    model, len(many_hot_encoder.labels), valid_weak_loader
+        #)
+        #valid_weak_f1 = np.mean(valid_weak_f1_pc)
+        #logger.info(
+        #    f"\n ### Valid weak metric \n F1 per class: {valid_weak_f1_pc} \n Macro average: {valid_weak_f1}"
+        #)
+        
 
         # Update state
         state = update_state(
@@ -567,12 +563,16 @@ if __name__ == "__main__":
         float_format="%.4f",
     )
 
+    """
+
     # ##############
     # VALIDATION
     # ##############
 
+    #ipdb.set_trace()
     if config_params.save_best:
-        model_fname = os.path.join(saved_model_dir, "baseline_best")
+        #model_fname = os.path.join(saved_model_dir, "baseline_best")
+        model_fname = os.path.join(saved_model_dir, "baseline_epoch_197")
         state = torch.load(model_fname)
 
         if model_type == "conf":
@@ -598,10 +598,9 @@ if __name__ == "__main__":
     )
 
     predictions_fname = os.path.join(saved_pred_dir, "baseline_validation.tsv")
-
     
     validation_data = DataLoadDf(
-        df=dfs["validation"],  # change the name of the synthetic
+        df=dfs["train_synthetic"],  # change the name of the synthetic
         encode_function=encod_func,
         transforms=transforms_valid,
         return_indexes=True,
@@ -613,9 +612,10 @@ if __name__ == "__main__":
         mel_f_max=config_params.mel_f_max,
         compute_log=config_params.compute_log,
         save_features=config_params.save_features,
-        filenames_folder=config_params.audio_eval_folder  # change filename folder
-        if config_params.evaluation
-        else config_params.audio_validation_dir,
+        #filenames_folder=config_params.audio_eval_folder  # change filename folder
+        #if config_params.evaluation
+        #else config_params.audio_validation_dir,
+        filenames_folder=config_params.audio_train_synth
     )
 
     validation_dataloader = DataLoader(
@@ -627,18 +627,18 @@ if __name__ == "__main__":
     )
 
     
-    if config_params.save_features:
+    """ if config_params.save_features:
         validation_labels_df = dfs["validation"].drop("feature_filename", axis=1)
     else:
-        validation_labels_df = dfs["validation"]
+        validation_labels_df = dfs["validation"] """
     
-    """
+    
     if config_params.save_features:
-        validation_labels_df = dfs["valid_synthetic"].drop("feature_filename", axis=1)
+        validation_labels_df = dfs["train_synthetic"].drop("feature_filename", axis=1)
     else:
-        validation_labels_df = dfs["valid_synthetic"]
+        validation_labels_df = dfs["train_synthetic"]
 
-    """
+    
     durations_validation = get_durations_df(
         config_params.validation, config_params.audio_validation_dir
     )
