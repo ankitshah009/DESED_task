@@ -272,8 +272,8 @@ class CombineChannels(Transform):
             sources[indexes_sorted[-1]] += sources_to_add
         return np.concatenate((mix, sources[indexes_sorted[2:]]))
 
-class EncodeLabel(Transform):
 
+class EncodeLabel(Transform):
     def __init__(self, many_hot_encoder, encode_type="strong", ratio_s_to_frames=None):
         """
         Initialization of EncodeLabel instance
@@ -286,23 +286,20 @@ class EncodeLabel(Transform):
         self.encode_type = encode_type
 
         if self.encode_type != "strong" and not ratio_s_to_frames:
-            raise NotImplementedError(f"Cannot change seconds to frames when encode_type is not strong." 
-                f"Current encode_type: {self.encode_type}, ratio_s_to_frames: {ratio_s_to_frames}")
+            raise NotImplementedError(
+                f"Cannot change seconds to frames when encode_type is not strong."
+                f"Current encode_type: {self.encode_type}, ratio_s_to_frames: {ratio_s_to_frames}"
+            )
         else:
             self.ratio_s_to_frames = ratio_s_to_frames
 
     def convert_s_to_frames(self, label):
 
-        
         if len(label) > 0:
             new_label = label.copy()
-            new_label.onset = (
-                new_label.onset * self.ratio_s_to_frames
-            ).round()
-            
-            new_label.offset = (
-                new_label.offset * self.ratio_s_to_frames
-            ).round()
+            new_label.onset = (new_label.onset * self.ratio_s_to_frames).round()
+
+            new_label.offset = (new_label.offset * self.ratio_s_to_frames).round()
 
         return new_label
 
@@ -326,11 +323,11 @@ class EncodeLabel(Transform):
 
             encoded_label = self.many_hot_encoder.encode_strong(res_label)
         else:
-            raise NotImplementedError(f"Not implemented encode type: {self.encode_type}")
+            raise NotImplementedError(
+                f"Not implemented encode type: {self.encode_type}"
+            )
 
         return encoded_label
-            
-    
 
 
 class Compose(object):
@@ -372,8 +369,6 @@ class Compose(object):
         format_string += "\n)"
 
         return format_string
-
-
 
 
 def get_transforms(

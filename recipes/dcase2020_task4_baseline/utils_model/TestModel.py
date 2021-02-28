@@ -2,33 +2,31 @@
 import argparse
 import os.path as osp
 
-import torch
-from torch.utils.data import DataLoader
 import numpy as np
 import pandas as pd
+import torch
+from torch.utils.data import DataLoader
 
-from utils_data.DataLoad import DataLoadDf
-from utils_data.Desed import DESED
 from evaluation import (
-    psds_score,
-    get_predictions,
-    compute_psds_from_operating_points,
     compute_metrics,
+    compute_psds_from_operating_points,
+    get_predictions,
+    psds_score,
 )
+from utils.Logger import create_logger
+from utils.ManyHotEncoder import ManyHotEncoder
+from utils.Scaler import Scaler, ScalerPerAudio
+from utils.Transforms import get_transforms
 from utils.utils import (
-    to_cuda_if_available,
     generate_tsv_wav_durations,
     meta_path_to_audio_dir,
+    to_cuda_if_available,
 )
-from utils.ManyHotEncoder import ManyHotEncoder
-from utils.Transforms import get_transforms
-from utils.Logger import create_logger
-from utils.Scaler import Scaler, ScalerPerAudio
-
+from utils_data.DataLoad import DataLoadDf
+from utils_data.Desed import DESED
+from utils_model.Conformer import Conformer
 from utils_model.CRNN import CRNN
 from utils_model.Transformer import Transformer
-from utils_model.Conformer import Conformer
-
 
 logger = create_logger(__name__)
 torch.manual_seed(2020)

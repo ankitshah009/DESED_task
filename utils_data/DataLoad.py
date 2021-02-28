@@ -182,11 +182,11 @@ class DataLoadDf(Dataset):
         if index == 0:
             logger.debug("label to encode: {}".format(label))
 
-        #TODO: CHANGE
-        #if self.encode_function is not None:
-            # labels are a list of string or list of list [[label, onset, offset]]
+        # TODO: CHANGE
+        # if self.encode_function is not None:
+        # labels are a list of string or list of list [[label, onset, offset]]
         #    y = self.encode_function(label)
-        #else:
+        # else:
         #    y = label
         sample = features, label
         return sample

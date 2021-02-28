@@ -72,16 +72,22 @@ class Scaler:
 
         counter = 0
 
-        #definition of files name for saving mean and mean of squared filename
+        # definition of files name for saving mean and mean of squared filename
         mean_filename = "mean_" + ext
         mos_filename = "mos_" + ext
-        logger.info(f"Mean filename: {mean_filename}, mean_of_squared_filename: {mos_filename}")
+        logger.info(
+            f"Mean filename: {mean_filename}, mean_of_squared_filename: {mos_filename}"
+        )
         create_folder("./mean")
         mean_file_path = os.path.join("./mean", mean_filename)
         mean_of_square_path = os.path.join("./mean", mos_filename)
-        logger.info(f"Path mean filename: {mean_file_path}, mean_of_squared path: {mean_of_square_path}")
-        
-        if os.path.exists(mean_file_path + ".npy") and os.path.exists(mean_of_square_path + ".npy"):
+        logger.info(
+            f"Path mean filename: {mean_file_path}, mean_of_squared path: {mean_of_square_path}"
+        )
+
+        if os.path.exists(mean_file_path + ".npy") and os.path.exists(
+            mean_of_square_path + ".npy"
+        ):
             logger.info("The file already exist")
             self.mean_ = np.load(mean_file_path + ".npy")
             self.mean_of_square_ = np.load(mean_of_square_path + ".npy")
@@ -159,7 +165,7 @@ class Scaler:
         return self.mean_, self.std_
 
     def normalize(self, batch):
-        
+
         if type(batch) is torch.Tensor:
             batch_ = batch.numpy()
             batch_ = (batch_ - self.mean_) / self.std_

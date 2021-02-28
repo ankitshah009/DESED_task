@@ -10,10 +10,7 @@ def create_logger(logger_name, terminal_level=logging.INFO):
         terminal_level: int, logging level in the terminal
     """
     logging.config.dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": False,
-        }
+        {"version": 1, "disable_existing_loggers": False,}
     )
     logger = logging.getLogger(logger_name)
     tool_formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")

@@ -10,7 +10,8 @@ from pprint import pprint
 
 import pandas as pd
 import numpy as np
-#import ipdb
+
+# import ipdb
 
 import torch
 from torch.utils.data import DataLoader
@@ -125,6 +126,14 @@ if __name__ == "__main__":
         help="Which kind of model we want to use",
     )
 
+    parser.add_argument(
+        "-r",
+        "--reduced",
+        dest="reduced_dataset",
+        default="False",
+        help="If reduced == True, a reduced part of the synthetic dataset will be used",
+    )
+
     f_args = parser.parse_args()
     pprint(vars(f_args))
     logger.info(
@@ -135,25 +144,25 @@ if __name__ == "__main__":
     no_synthetic = f_args.no_synthetic
     test = f_args.test
     model_type = f_args.model_type
+    reduced_dataset = f_args.reduced_dataset
 
     if no_synthetic:
         add_dir_model_name = "_no_synthetic"
     else:
         if config_params.year == "2020":
             if model_type == "crnn":
-                add_dir_model_name = "_with_synthetic_crnn_new" 
+                add_dir_model_name = "_with_synthetic_crnn_new"
             elif model_type == "conf":
                 add_dir_model_name = "_with_synthetic_conf_s"
             elif model_type == "tran":
                 add_dir_model_name = "_with_synthetic_tran"
         else:
             if model_type == "crnn":
-                add_dir_model_name = "_with_synthetic_crnn_new" 
+                add_dir_model_name = "_with_synthetic_crnn_new"
             elif model_type == "conf":
                 add_dir_model_name = "_with_synthetic_conf_new_r"
             elif model_type == "tran":
                 add_dir_model_name = "_with_synthetic_tran"
-
 
     logger.info(f"Model folder name extension: {add_dir_model_name}")
     logger.info(f"Model selected: {model_type}")
@@ -163,8 +172,13 @@ if __name__ == "__main__":
     )
 
     if test:
-        reduced_number_of_data = 24
+        nb_files = 24
         config_params.n_epoch = 2
+
+    if reduced_dataset:
+        ext = "r"
+    else:
+        ext = "s" if config_params.year == "2020" else "s_new"
 
     # creating models and prediction folders to save models and predictions of the system
     saved_model_dir, saved_pred_dir = create_stored_data_folder(
@@ -175,7 +189,6 @@ if __name__ == "__main__":
     # PREPARE THE DATA (ETL PROCESS: EXTRACTION, PROCESSING AND LOAD)
     # ################################################################
 
-    
     dataset, dfs = get_dataset(
         base_feature_dir=os.path.join(
             config_params.workspace, "data", "features"
@@ -189,6 +202,7 @@ if __name__ == "__main__":
         pooling_time_ratio=config_params.pooling_time_ratio,
         eval_dataset=config_params.evaluation,
         save_features=config_params.save_features,
+        reduced_dataset=reduced_dataset,
         nb_files=reduced_number_of_data,
     )
 
@@ -198,7 +212,7 @@ if __name__ == "__main__":
         n_frames=config_params.max_frames // config_params.pooling_time_ratio,
     )
 
-    #encod_func = many_hot_encoder.encode_strong_df
+    # encod_func = many_hot_encoder.encode_strong_df
 
     """
     weak_data = DataLoadDf(
@@ -243,7 +257,7 @@ if __name__ == "__main__":
             mel_f_max=config_params.mel_f_max,
             compute_log=config_params.compute_log,
             save_features=config_params.save_features,
-            filenames_folder=config_params.audio_train_synth
+            filenames_folder=config_params.audio_train_synth,
         )
     else:
         train_synth_data = DataLoadDf(
@@ -262,31 +276,38 @@ if __name__ == "__main__":
         )
 
     training_dataset = {
-        #"weak": weak_data,
-        #"unlabel": unlabel_data,
+        # "weak": weak_data,
+        # "unlabel": unlabel_data,
         "synthetic": train_synth_data,
     }
 
-    ratio = float(config_params.sample_rate) / float(config_params.hop_size) / float(config_params.pooling_time_ratio)
-    
+    ratio = (
+        float(config_params.sample_rate)
+        / float(config_params.hop_size)
+        / float(config_params.pooling_time_ratio)
+    )
+
     transforms, transforms_valid, scaler, scaler_args = get_compose_transforms(
         datasets=training_dataset,
         scaler_type=config_params.scaler_type,
         max_frames=config_params.max_frames,
         add_axis_conv=config_params.add_axis_conv,
         noise_snr=config_params.noise_snr,
-        encode_label_kwargs={"many_hot_encoder": many_hot_encoder, "encode_type": "strong", "ratio_s_to_frames": ratio},
-        #ext="s" if config_params.year == "2020" else "s_new"
-        ext="r" #reduced
+        encode_label_kwargs={
+            "many_hot_encoder": many_hot_encoder,
+            "encode_type": "strong",
+            "ratio_s_to_frames": ratio,
+        },
+        ext=ext,
     )
 
-    #weak_data.transforms = transforms
-    #unlabel_data.transforms = transforms
+    # weak_data.transforms = transforms
+    # unlabel_data.transforms = transforms
     train_synth_data.transforms = transforms
 
-    #weak_data.in_memory = config_params.in_memory
+    # weak_data.in_memory = config_params.in_memory
     train_synth_data.in_memory = config_params.in_memory
-    #unlabel_data.in_memory = config_params.in_memory_unlab
+    # unlabel_data.in_memory = config_params.in_memory_unlab
 
     if config_params.year == "2021":
         valid_synth_data = DataLoadDf(
@@ -302,7 +323,7 @@ if __name__ == "__main__":
             mel_f_max=config_params.mel_f_max,
             compute_log=config_params.compute_log,
             save_features=config_params.save_features,
-            filenames_folder=config_params.audio_valid_synth
+            filenames_folder=config_params.audio_valid_synth,
         )
     else:
         valid_synth_data = DataLoadDf(
@@ -322,7 +343,7 @@ if __name__ == "__main__":
                 config_params.audio_train_folder, "synthetic20_validation/soundscapes"
             ),
         )
-    
+
     """
     valid_weak_data = DataLoadDf(
         df=dfs["valid_weak"],
@@ -342,29 +363,27 @@ if __name__ == "__main__":
     )
 
     """
-    #logger.debug(
+    # logger.debug(
     #    f"len synth: {len(train_synth_data)}, len_unlab: {len(unlabel_data)}, len weak: {len(weak_data)}"
-    #)
-    
+    # )
 
     # get batch sizes and label masks depending on if synthetic data are used or not
-    #weak_mask, strong_mask, batch_sizes = get_batchsizes_and_masks(
+    # weak_mask, strong_mask, batch_sizes = get_batchsizes_and_masks(
     #    no_synthetic, config_params.batch_size
-    #)
+    # )
 
     # concatenate dataset list depending on if synthetic data are used or not
-    #concat_dataset = (
+    # concat_dataset = (
     #    ConcatDataset([weak_data, unlabel_data])
     #    if no_synthetic
     #    else ConcatDataset([weak_data, unlabel_data, train_synth_data])
-    #)
+    # )
 
-
-    #concat_dataset = (
+    # concat_dataset = (
     #    ConcatDataset([train_synth_data])
-    #)
+    # )
 
-    #sampler = MultiStreamBatchSampler(concat_dataset, batch_sizes=batch_sizes)
+    # sampler = MultiStreamBatchSampler(concat_dataset, batch_sizes=batch_sizes)
 
     training_loader = DataLoader(
         dataset=train_synth_data,
@@ -378,11 +397,11 @@ if __name__ == "__main__":
         num_workers=config_params.num_workers,
     )
 
-    #valid_weak_loader = DataLoader(
+    # valid_weak_loader = DataLoader(
     #    dataset=valid_weak_data,
     #    batch_size=config_params.batch_size,
     #    num_workers=config_params.num_workers,
-    #)
+    # )
 
     # ####################################
     # INITIALIZATION OF MODELS
@@ -569,7 +588,7 @@ if __name__ == "__main__":
     # ##############
 
     if config_params.save_best:
-        #model_fname = os.path.join(saved_model_dir, "baseline_best")
+        # model_fname = os.path.join(saved_model_dir, "baseline_best")
         model_fname = os.path.join(saved_model_dir, "baseline_epoch_83")
         state = torch.load(model_fname)
 
@@ -590,14 +609,18 @@ if __name__ == "__main__":
     model.eval()
 
     transforms_valid = get_transforms(
-        encode_label_kwargs={"many_hot_encoder": many_hot_encoder, "encode_type": "strong", "ratio_s_to_frames": ratio},
+        encode_label_kwargs={
+            "many_hot_encoder": many_hot_encoder,
+            "encode_type": "strong",
+            "ratio_s_to_frames": ratio,
+        },
         frames=config_params.max_frames,
         scaler=scaler,
         add_axis=config_params.add_axis_conv,
     )
 
     predictions_fname = os.path.join(saved_pred_dir, "baseline_validation.tsv")
-    
+
     validation_data = DataLoadDf(
         df=dfs["train_synthetic"],  # change the name of the synthetic
         transforms=transforms_valid,
@@ -610,10 +633,10 @@ if __name__ == "__main__":
         mel_f_max=config_params.mel_f_max,
         compute_log=config_params.compute_log,
         save_features=config_params.save_features,
-        #filenames_folder=config_params.audio_eval_folder  # change filename folder
-        #if config_params.evaluation
-        #else config_params.audio_validation_dir,
-        filenames_folder=config_params.audio_train_synth
+        # filenames_folder=config_params.audio_eval_folder  # change filename folder
+        # if config_params.evaluation
+        # else config_params.audio_validation_dir,
+        filenames_folder=config_params.audio_train_synth,
     )
 
     validation_dataloader = DataLoader(
@@ -624,19 +647,16 @@ if __name__ == "__main__":
         num_workers=config_params.num_workers,
     )
 
-    
     """ if config_params.save_features:
         validation_labels_df = dfs["validation"].drop("feature_filename", axis=1)
     else:
         validation_labels_df = dfs["validation"] """
-    
-    
+
     if config_params.save_features:
         validation_labels_df = dfs["train_synthetic"].drop("feature_filename", axis=1)
     else:
         validation_labels_df = dfs["train_synthetic"]
 
-    
     durations_validation = get_durations_df(
         config_params.validation, config_params.audio_validation_dir
     )

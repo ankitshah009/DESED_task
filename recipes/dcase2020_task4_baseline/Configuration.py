@@ -43,22 +43,24 @@ class Configuration:
                 self.metadata_train_folder, "synthetic20_train/soundscapes.tsv"
             )
         else:
-            #self.train_synth = os.path.join(
-             #self.metadata_train_folder, "synthetic2021_train/soundscapes.csv"
-            #)
-            self.train_synth = '/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/meta/train.csv'
+            # self.train_synth = os.path.join(
+            # self.metadata_train_folder, "synthetic2021_train/soundscapes.csv"
+            # )
+            self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/meta/train.csv"
 
         # validation dataset metadata paths
         self.validation = os.path.join(self.metadata_valid_folder, "validation.tsv")
 
         # synthetic dataset metadata path
         if self.year == "2020":
-            self.valid_synth = os.path.join(self.metadata_valid_folder, "synthetic20_validation/soundscapes.tsv")
+            self.valid_synth = os.path.join(
+                self.metadata_valid_folder, "synthetic20_validation/soundscapes.tsv"
+            )
         else:
-            #self.valid_synth = os.path.join(
+            # self.valid_synth = os.path.join(
             #    self.metadata_valid_folder, "synthetic2021_validation/validation.csv"
             #    )
-            self.valid_synth = '/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/meta/validation.csv'
+            self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/meta/validation.csv"
 
         # 2018 dataset metadata path
         self.test2018 = os.path.join(self.metadata_valid_folder, "test_dcase2018.tsv")
@@ -75,14 +77,16 @@ class Configuration:
         self.audio_eval_folder = os.path.join(self.audio_folder, "eval/public")
         # to check
         if self.year == "2020":
-            self.audio_valid_synth = os.path.join(self.audio_train_folder, "synthetic20_validation/soundscapes")
+            self.audio_valid_synth = os.path.join(
+                self.audio_train_folder, "synthetic20_validation/soundscapes"
+            )
         else:
-            #self.audio_valid_synth = os.path.join(
+            # self.audio_valid_synth = os.path.join(
             #    self.audio_train_folder, "synthetic2021_validation/soundscapes"
-            #)
-            self.audio_valid_synth = '/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/soundscapes/validation'
-        
-        self.audio_train_synth = '/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/soundscapes/train'
+            # )
+            self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/soundscapes/validation"
+
+        self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/soundscapes/train"
 
         # Source separation dataset path
         self.weak_ss = os.path.join(self.audio_train_folder, "weak")
