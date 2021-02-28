@@ -147,6 +147,8 @@ if __name__ == "__main__":
     model_type = f_args.model_type
     reduced_dataset = f_args.reduced_dataset
 
+    folder_ext = "_r" if reduced_dataset else ""
+    
     if no_synthetic:
         add_dir_model_name = "_no_synthetic"
     else:
@@ -159,9 +161,9 @@ if __name__ == "__main__":
                 add_dir_model_name = "_with_synthetic_tran"
         else:
             if model_type == "crnn":
-                add_dir_model_name = "_with_synthetic_crnn_new"
+                add_dir_model_name = "_with_synthetic_crnn_new" + folder_ext
             elif model_type == "conf":
-                add_dir_model_name = "_with_synthetic_conf_new_r"
+                add_dir_model_name = "_with_synthetic_conf_new" + folder_ext
             elif model_type == "tran":
                 add_dir_model_name = "_with_synthetic_tran"
 
@@ -173,7 +175,7 @@ if __name__ == "__main__":
     )
 
     if test:
-        nb_files = 24
+        reduced_number_of_data = 24
         config_params.n_epoch = 2
 
     if reduced_dataset:
@@ -459,7 +461,6 @@ if __name__ == "__main__":
     # TRAINING
     # ##############
 
-    """
     for epoch in range(config_params.n_epoch):
         model.train()
         model_ema.train()
@@ -563,6 +564,7 @@ if __name__ == "__main__":
         if config_params.save_best:
             if save_best_cb.apply(valid_synth_f1):
                 model_fname = os.path.join(saved_model_dir, "baseline_best")
+         
                 torch.save(state, model_fname)
             results.loc[epoch, "global_valid"] = global_valid
 
@@ -582,15 +584,14 @@ if __name__ == "__main__":
         float_format="%.4f",
     )
 
-    """
 
     # ##############
     # VALIDATION
     # ##############
 
     if config_params.save_best:
-        # model_fname = os.path.join(saved_model_dir, "baseline_best")
-        model_fname = os.path.join(saved_model_dir, "baseline_epoch_83")
+        model_fname = os.path.join(saved_model_dir, "baseline_best")
+        #model_fname = os.path.join(saved_model_dir, "baseline_epoch_157")
         state = torch.load(model_fname)
 
         if model_type == "conf":
@@ -623,7 +624,7 @@ if __name__ == "__main__":
     predictions_fname = os.path.join(saved_pred_dir, "baseline_validation.tsv")
 
     validation_data = DataLoadDf(
-        df=dfs["train_synthetic"],  # change the name of the synthetic
+        df=dfs["validation"],  # change the name of the synthetic
         transforms=transforms_valid,
         return_indexes=True,
         sample_rate=config_params.sample_rate,
@@ -634,10 +635,10 @@ if __name__ == "__main__":
         mel_f_max=config_params.mel_f_max,
         compute_log=config_params.compute_log,
         save_features=config_params.save_features,
-        # filenames_folder=config_params.audio_eval_folder  # change filename folder
-        # if config_params.evaluation
-        # else config_params.audio_validation_dir,
-        filenames_folder=config_params.audio_train_synth,
+        filenames_folder=config_params.audio_eval_folder  # change filename folder
+        if config_params.evaluation
+        else config_params.audio_validation_dir,
+        #filenames_folder=config_params.audio_train_synth,
     )
 
     validation_dataloader = DataLoader(
@@ -648,15 +649,15 @@ if __name__ == "__main__":
         num_workers=config_params.num_workers,
     )
 
-    """ if config_params.save_features:
+    if config_params.save_features:
         validation_labels_df = dfs["validation"].drop("feature_filename", axis=1)
     else:
-        validation_labels_df = dfs["validation"] """
+        validation_labels_df = dfs["validation"]
 
-    if config_params.save_features:
-        validation_labels_df = dfs["train_synthetic"].drop("feature_filename", axis=1)
-    else:
-        validation_labels_df = dfs["train_synthetic"]
+    # if config_params.save_features:
+    #     validation_labels_df = dfs["train_synthetic"].drop("feature_filename", axis=1)
+    # else:
+    #     validation_labels_df = dfs["train_synthetic"]
 
     durations_validation = get_durations_df(
         config_params.validation, config_params.audio_validation_dir

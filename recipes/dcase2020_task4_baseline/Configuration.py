@@ -46,7 +46,7 @@ class Configuration:
             # self.train_synth = os.path.join(
             # self.metadata_train_folder, "synthetic2021_train/soundscapes.csv"
             # )
-            self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/meta/train.csv"
+            self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/metadata/train/synthetic21_train/soundscapes.tsv"
 
         # validation dataset metadata paths
         self.validation = os.path.join(self.metadata_valid_folder, "validation.tsv")
@@ -60,7 +60,7 @@ class Configuration:
             # self.valid_synth = os.path.join(
             #    self.metadata_valid_folder, "synthetic2021_validation/validation.csv"
             #    )
-            self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/meta/validation.csv"
+            self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/metadata/validation/synthetic21_validation/soundscapes.tsv"
 
         # 2018 dataset metadata path
         self.test2018 = os.path.join(self.metadata_valid_folder, "test_dcase2018.tsv")
@@ -84,9 +84,9 @@ class Configuration:
             # self.audio_valid_synth = os.path.join(
             #    self.audio_train_folder, "synthetic2021_validation/soundscapes"
             # )
-            self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/soundscapes/validation"
+            self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/audio/validation/synthetic21_validation/soundscapes"
 
-        self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/corpus/environmental_audio/DCASE2021/soundscapes/train"
+        self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/audio/train/synthetic21_train/soundscapes"
 
         # Source separation dataset path
         self.weak_ss = os.path.join(self.audio_train_folder, "weak")
