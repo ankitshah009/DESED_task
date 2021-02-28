@@ -130,7 +130,8 @@ if __name__ == "__main__":
         "-r",
         "--reduced",
         dest="reduced_dataset",
-        default="False",
+        action="store_true",
+        default=False,
         help="If reduced == True, a reduced part of the synthetic dataset will be used",
     )
 
