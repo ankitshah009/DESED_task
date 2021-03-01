@@ -123,7 +123,7 @@ if __name__ == "__main__":
         "--model",
         dest="model_type",
         default="crnn",
-        help="Which kind of model we want to use",
+        help="Which kind of model we want to use. Possible values: crnn (CRNN model), conf (Conformer)",
     )
 
     parser.add_argument(
@@ -133,6 +133,22 @@ if __name__ == "__main__":
         action="store_true",
         default=False,
         help="If reduced == True, a reduced part of the synthetic dataset will be used",
+    )
+
+    parser.add_argument(
+        "-tr",
+        "--training",
+        dest="training",
+        action="store_true",
+        default=False,
+        help="If training == True, the network is trained, if training == False predictions are made using the best_baseline",
+    )
+
+    parser.add_argument(
+        "-set",
+        dest="dataset_set",
+        default="validation",
+        help="possible set: dev, ts, vs (dev: development set, ts: training synthetic, vs: valid synthetic)",
     )
 
     f_args = parser.parse_args()
@@ -146,6 +162,8 @@ if __name__ == "__main__":
     test = f_args.test
     model_type = f_args.model_type
     reduced_dataset = f_args.reduced_dataset
+    training = f_args.training
+    dataset_set = f_args.dataset_set
 
     folder_ext = "_r" if reduced_dataset else ""
     
@@ -461,128 +479,129 @@ if __name__ == "__main__":
     # TRAINING
     # ##############
 
-    for epoch in range(config_params.n_epoch):
-        model.train()
-        model_ema.train()
-        model, model_ema = to_cuda_if_available(model, model_ema)
+    if training:
+        for epoch in range(config_params.n_epoch):
+            model.train()
+            model_ema.train()
+            model, model_ema = to_cuda_if_available(model, model_ema)
 
-        loss_value = train(
-            train_loader=training_loader,
-            model=model,
-            optimizer=optimizer,
-            optimizer_type=config_params.optim,
-            c_epoch=epoch,
-            max_consistency_cost=config_params.max_consistency_cost,
-            n_epoch_rampup=config_params.n_epoch_rampup,
-            max_learning_rate=config_params.max_learning_rate,
-            ema_model=model_ema,
-            #mask_weak=weak_mask,
-            #mask_strong=strong_mask,
-            adjust_lr=config_params.adjust_lr,
-        )
+            loss_value = train(
+                train_loader=training_loader,
+                model=model,
+                optimizer=optimizer,
+                optimizer_type=config_params.optim,
+                c_epoch=epoch,
+                max_consistency_cost=config_params.max_consistency_cost,
+                n_epoch_rampup=config_params.n_epoch_rampup,
+                max_learning_rate=config_params.max_learning_rate,
+                ema_model=model_ema,
+                #mask_weak=weak_mask,
+                #mask_strong=strong_mask,
+                adjust_lr=config_params.adjust_lr,
+            )
 
-        # Validation
-        model = model.eval()
-        logger.info("\n ### Valid synthetic metric ### \n")
+            # Validation
+            model = model.eval()
+            logger.info("\n ### Valid synthetic metric ### \n")
 
-        predictions = get_predictions(
-            model=model,
-            dataloader=valid_synth_loader,
-            decoder=many_hot_encoder.decode_strong,
-            sample_rate=config_params.sample_rate,
-            hop_size=config_params.hop_size,
-            max_len_seconds=config_params.max_len_seconds,
-            pooling_time_ratio=config_params.pooling_time_ratio,
-            median_window=config_params.median_window,
-            save_predictions=None,
-        )
-        # Validation with synthetic data (dropping feature_filename for psds)
-        if config_params.save_features:
-            valid_synth = dfs["valid_synthetic"].drop("feature_filename", axis=1)
-        else:
-            valid_synth = dfs["valid_synthetic"]
-        
-        #valid_synth_f1, psds_m_f1 = compute_metrics(
-        #    predictions, valid_synth, durations_synth
-        #)
-        
-        valid_synth_f1, lvf1, hvf1 = bootstrap(
-            predictions, valid_synth, get_f1_sed_score
-        )
-        psds_f1_valid, lvps, hvps = bootstrap(
-            predictions, valid_synth, get_f1_psds, meta_df=durations_synth
-        )
+            predictions = get_predictions(
+                model=model,
+                dataloader=valid_synth_loader,
+                decoder=many_hot_encoder.decode_strong,
+                sample_rate=config_params.sample_rate,
+                hop_size=config_params.hop_size,
+                max_len_seconds=config_params.max_len_seconds,
+                pooling_time_ratio=config_params.pooling_time_ratio,
+                median_window=config_params.median_window,
+                save_predictions=None,
+            )
+            # Validation with synthetic data (dropping feature_filename for psds)
+            if config_params.save_features:
+                valid_synth = dfs["valid_synthetic"].drop("feature_filename", axis=1)
+            else:
+                valid_synth = dfs["valid_synthetic"]
+            
+            #valid_synth_f1, psds_m_f1 = compute_metrics(
+            #    predictions, valid_synth, durations_synth
+            #)
+            
+            valid_synth_f1, lvf1, hvf1 = bootstrap(
+                predictions, valid_synth, get_f1_sed_score
+            )
+            psds_f1_valid, lvps, hvps = bootstrap(
+                predictions, valid_synth, get_f1_psds, meta_df=durations_synth
+            )
 
-        logger.info(
-            f"F1 event_based: {valid_synth_f1}, +- {max(valid_synth_f1-lvf1, hvf1 - valid_synth_f1)},\n"
-            f"Psds ct: {psds_f1_valid}, +- {max(psds_f1_valid - lvps, hvps - psds_f1_valid)}"
-        )
+            logger.info(
+                f"F1 event_based: {valid_synth_f1}, +- {max(valid_synth_f1-lvf1, hvf1 - valid_synth_f1)},\n"
+                f"Psds ct: {psds_f1_valid}, +- {max(psds_f1_valid - lvps, hvps - psds_f1_valid)}"
+            )
 
-        
-        #valid_weak_f1_pc = get_f_measure_by_class(
-        #    model, len(many_hot_encoder.labels), valid_weak_loader
-        #)
-        #valid_weak_f1 = np.mean(valid_weak_f1_pc)
-        #logger.info(
-        #    f"\n ### Valid weak metric \n F1 per class: {valid_weak_f1_pc} \n Macro average: {valid_weak_f1}"
-        #)
-        
+            
+            #valid_weak_f1_pc = get_f_measure_by_class(
+            #    model, len(many_hot_encoder.labels), valid_weak_loader
+            #)
+            #valid_weak_f1 = np.mean(valid_weak_f1_pc)
+            #logger.info(
+            #    f"\n ### Valid weak metric \n F1 per class: {valid_weak_f1_pc} \n Macro average: {valid_weak_f1}"
+            #)
+            
 
-        # Update state
-        state = update_state(
-            model,
-            model_ema,
-            optimizer,
-            epoch,
-            valid_synth_f1,
-            psds_f1_valid,
-            state,
-        )
+            # Update state
+            state = update_state(
+                model,
+                model_ema,
+                optimizer,
+                epoch,
+                valid_synth_f1,
+                psds_f1_valid,
+                state,
+            )
 
-        #state = update_state(
-        #    model,
-        #    model_ema,
-        #    optimizer,
-        #    epoch,
-        #    valid_synth_f1,
-        #    psds_f1_valid,
-        #    valid_weak_f1,
-        #    state,
-        #)
+            #state = update_state(
+            #    model,
+            #    model_ema,
+            #    optimizer,
+            #    epoch,
+            #    valid_synth_f1,
+            #    psds_f1_valid,
+            #    valid_weak_f1,
+            #    state,
+            #)
 
-        #global_valid = valid_weak_f1 + valid_synth_f1
-        global_valid = valid_synth_f1
-        
-        # Callbacks
-        if (
-            config_params.checkpoint_epochs is not None
-            and (epoch + 1) % config_params.checkpoint_epochs == 0
-        ):
-            model_fname = os.path.join(saved_model_dir, "baseline_epoch_" + str(epoch))
-            torch.save(state, model_fname)
-
-        if config_params.save_best:
-            if save_best_cb.apply(valid_synth_f1):
-                model_fname = os.path.join(saved_model_dir, "baseline_best")
-         
+            #global_valid = valid_weak_f1 + valid_synth_f1
+            global_valid = valid_synth_f1
+            
+            # Callbacks
+            if (
+                config_params.checkpoint_epochs is not None
+                and (epoch + 1) % config_params.checkpoint_epochs == 0
+            ):
+                model_fname = os.path.join(saved_model_dir, "baseline_epoch_" + str(epoch))
                 torch.save(state, model_fname)
-            results.loc[epoch, "global_valid"] = global_valid
 
-        results.loc[epoch, "loss"] = loss_value.item()
-        results.loc[epoch, "valid_synth_f1"] = valid_synth_f1
+            if config_params.save_best:
+                if save_best_cb.apply(valid_synth_f1):
+                    model_fname = os.path.join(saved_model_dir, "baseline_best")
+            
+                    torch.save(state, model_fname)
+                results.loc[epoch, "global_valid"] = global_valid
 
-        if config_params.early_stopping:
-            if early_stopping_call.apply(valid_synth_f1):
-                logger.warn("EARLY STOPPING")
-                break
+            results.loc[epoch, "loss"] = loss_value.item()
+            results.loc[epoch, "valid_synth_f1"] = valid_synth_f1
 
-    # save the results on csv file
-    results_df = pd.DataFrame(results).to_csv(
-        os.path.join(saved_pred_dir, "results.tsv"),
-        sep="\t",
-        index=False,
-        float_format="%.4f",
-    )
+            if config_params.early_stopping:
+                if early_stopping_call.apply(valid_synth_f1):
+                    logger.warn("EARLY STOPPING")
+                    break
+
+        # save the results on csv file
+        results_df = pd.DataFrame(results).to_csv(
+            os.path.join(saved_pred_dir, "results.tsv"),
+            sep="\t",
+            index=False,
+            float_format="%.4f",
+        )
 
 
     # ##############
@@ -623,8 +642,20 @@ if __name__ == "__main__":
 
     predictions_fname = os.path.join(saved_pred_dir, "baseline_validation.tsv")
 
+    if dataset_set == "dev":
+        df = dfs["validation"]
+        fnames_folder = config_params.audio_eval_folder if config_params.evaluation else config_params.audio_validation_dir
+    else:
+        fnames_folder = config_params.audio_train_synth
+        if dataset_set == "ts":
+            df = dfs["train_synthetic"]
+        elif dataset_set == "vs":
+            df = dfs["valid_synthetic"]
+        else:
+            raise NotImplementedError(f"Dataset subset not valid. Dataset set selected: {dataset_set}")
+
     validation_data = DataLoadDf(
-        df=dfs["validation"],  # change the name of the synthetic
+        df=df,  
         transforms=transforms_valid,
         return_indexes=True,
         sample_rate=config_params.sample_rate,
@@ -635,10 +666,7 @@ if __name__ == "__main__":
         mel_f_max=config_params.mel_f_max,
         compute_log=config_params.compute_log,
         save_features=config_params.save_features,
-        filenames_folder=config_params.audio_eval_folder  # change filename folder
-        if config_params.evaluation
-        else config_params.audio_validation_dir,
-        #filenames_folder=config_params.audio_train_synth,
+        filenames_folder=fnames_folder
     )
 
     validation_dataloader = DataLoader(
@@ -650,14 +678,9 @@ if __name__ == "__main__":
     )
 
     if config_params.save_features:
-        validation_labels_df = dfs["validation"].drop("feature_filename", axis=1)
+        validation_labels_df = df.drop("feature_filename", axis=1)
     else:
-        validation_labels_df = dfs["validation"]
-
-    # if config_params.save_features:
-    #     validation_labels_df = dfs["train_synthetic"].drop("feature_filename", axis=1)
-    # else:
-    #     validation_labels_df = dfs["train_synthetic"]
+        validation_labels_df = df
 
     durations_validation = get_durations_df(
         config_params.validation, config_params.audio_validation_dir
