@@ -193,6 +193,7 @@ if __name__ == "__main__":
         f"Evaluation: {config_params.evaluation}, save_features: {config_params.save_features}"
         ""
     )
+    logger.info(f"Dataset type: {config_params.dataset}")
 
     if test:
         reduced_number_of_data = 24
