@@ -147,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-set",
         dest="dataset_set",
-        default="validation",
+        default="dev",
         help="possible set: dev, ts, vs (dev: development set, ts: training synthetic, vs: valid synthetic)",
     )
 
@@ -164,8 +164,10 @@ if __name__ == "__main__":
     reduced_dataset = f_args.reduced_dataset
     training = f_args.training
     dataset_set = f_args.dataset_set
-
+    
+    
     folder_ext = "_r" if reduced_dataset else ""
+    dataset_type = config_params.dataset
     
     if no_synthetic:
         add_dir_model_name = "_no_synthetic"
@@ -179,9 +181,9 @@ if __name__ == "__main__":
                 add_dir_model_name = "_with_synthetic_tran"
         else:
             if model_type == "crnn":
-                add_dir_model_name = "_with_synthetic_crnn_new" + folder_ext
+                add_dir_model_name = "_with_synthetic_crnn_" + dataset_type + folder_ext
             elif model_type == "conf":
-                add_dir_model_name = "_with_synthetic_conf_new" + folder_ext
+                add_dir_model_name = "_with_synthetic_conf_" + dataset_type + folder_ext
             elif model_type == "tran":
                 add_dir_model_name = "_with_synthetic_tran"
 
@@ -319,7 +321,7 @@ if __name__ == "__main__":
             "encode_type": "strong",
             "ratio_s_to_frames": ratio,
         },
-        ext=ext,
+        ext=dataset_type + "_" + ext,
     )
 
     # weak_data.transforms = transforms
@@ -610,7 +612,6 @@ if __name__ == "__main__":
 
     if config_params.save_best:
         model_fname = os.path.join(saved_model_dir, "baseline_best")
-        #model_fname = os.path.join(saved_model_dir, "baseline_epoch_157")
         state = torch.load(model_fname)
 
         if model_type == "conf":
