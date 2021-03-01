@@ -164,11 +164,10 @@ if __name__ == "__main__":
     reduced_dataset = f_args.reduced_dataset
     training = f_args.training
     dataset_set = f_args.dataset_set
-    
-    
+
     folder_ext = "_r" if reduced_dataset else ""
     dataset_type = config_params.dataset
-    
+
     if no_synthetic:
         add_dir_model_name = "_no_synthetic"
     else:
@@ -498,8 +497,8 @@ if __name__ == "__main__":
                 n_epoch_rampup=config_params.n_epoch_rampup,
                 max_learning_rate=config_params.max_learning_rate,
                 ema_model=model_ema,
-                #mask_weak=weak_mask,
-                #mask_strong=strong_mask,
+                # mask_weak=weak_mask,
+                # mask_strong=strong_mask,
                 adjust_lr=config_params.adjust_lr,
             )
 
@@ -523,11 +522,11 @@ if __name__ == "__main__":
                 valid_synth = dfs["valid_synthetic"].drop("feature_filename", axis=1)
             else:
                 valid_synth = dfs["valid_synthetic"]
-            
-            #valid_synth_f1, psds_m_f1 = compute_metrics(
+
+            # valid_synth_f1, psds_m_f1 = compute_metrics(
             #    predictions, valid_synth, durations_synth
-            #)
-            
+            # )
+
             valid_synth_f1, lvf1, hvf1 = bootstrap(
                 predictions, valid_synth, get_f1_sed_score
             )
@@ -540,15 +539,13 @@ if __name__ == "__main__":
                 f"Psds ct: {psds_f1_valid}, +- {max(psds_f1_valid - lvps, hvps - psds_f1_valid)}"
             )
 
-            
-            #valid_weak_f1_pc = get_f_measure_by_class(
+            # valid_weak_f1_pc = get_f_measure_by_class(
             #    model, len(many_hot_encoder.labels), valid_weak_loader
-            #)
-            #valid_weak_f1 = np.mean(valid_weak_f1_pc)
-            #logger.info(
+            # )
+            # valid_weak_f1 = np.mean(valid_weak_f1_pc)
+            # logger.info(
             #    f"\n ### Valid weak metric \n F1 per class: {valid_weak_f1_pc} \n Macro average: {valid_weak_f1}"
-            #)
-            
+            # )
 
             # Update state
             state = update_state(
@@ -561,7 +558,7 @@ if __name__ == "__main__":
                 state,
             )
 
-            #state = update_state(
+            # state = update_state(
             #    model,
             #    model_ema,
             #    optimizer,
@@ -570,23 +567,25 @@ if __name__ == "__main__":
             #    psds_f1_valid,
             #    valid_weak_f1,
             #    state,
-            #)
+            # )
 
-            #global_valid = valid_weak_f1 + valid_synth_f1
+            # global_valid = valid_weak_f1 + valid_synth_f1
             global_valid = valid_synth_f1
-            
+
             # Callbacks
             if (
                 config_params.checkpoint_epochs is not None
                 and (epoch + 1) % config_params.checkpoint_epochs == 0
             ):
-                model_fname = os.path.join(saved_model_dir, "baseline_epoch_" + str(epoch))
+                model_fname = os.path.join(
+                    saved_model_dir, "baseline_epoch_" + str(epoch)
+                )
                 torch.save(state, model_fname)
 
             if config_params.save_best:
                 if save_best_cb.apply(valid_synth_f1):
                     model_fname = os.path.join(saved_model_dir, "baseline_best")
-            
+
                     torch.save(state, model_fname)
                 results.loc[epoch, "global_valid"] = global_valid
 
@@ -605,7 +604,6 @@ if __name__ == "__main__":
             index=False,
             float_format="%.4f",
         )
-
 
     # ##############
     # VALIDATION
@@ -646,7 +644,11 @@ if __name__ == "__main__":
 
     if dataset_set == "dev":
         df = dfs["validation"]
-        fnames_folder = config_params.audio_eval_folder if config_params.evaluation else config_params.audio_validation_dir
+        fnames_folder = (
+            config_params.audio_eval_folder
+            if config_params.evaluation
+            else config_params.audio_validation_dir
+        )
     else:
         fnames_folder = config_params.audio_train_synth
         if dataset_set == "ts":
@@ -654,10 +656,12 @@ if __name__ == "__main__":
         elif dataset_set == "vs":
             df = dfs["valid_synthetic"]
         else:
-            raise NotImplementedError(f"Dataset subset not valid. Dataset set selected: {dataset_set}")
+            raise NotImplementedError(
+                f"Dataset subset not valid. Dataset set selected: {dataset_set}"
+            )
 
     validation_data = DataLoadDf(
-        df=df,  
+        df=df,
         transforms=transforms_valid,
         return_indexes=True,
         sample_rate=config_params.sample_rate,
@@ -668,7 +672,7 @@ if __name__ == "__main__":
         mel_f_max=config_params.mel_f_max,
         compute_log=config_params.compute_log,
         save_features=config_params.save_features,
-        filenames_folder=fnames_folder
+        filenames_folder=fnames_folder,
     )
 
     validation_dataloader = DataLoader(

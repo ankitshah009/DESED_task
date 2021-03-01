@@ -68,7 +68,8 @@ class MultiHeadAttentionConf(nn.Module):
         self.norm = nn.LayerNorm(embed_dim)
 
         self.multiheadattention = nn.MultiheadAttention(
-            embed_dim=embed_dim, num_heads=num_heads,
+            embed_dim=embed_dim,
+            num_heads=num_heads,
         )
 
         self.dropout = nn.Dropout(p=transformer_dropout)
