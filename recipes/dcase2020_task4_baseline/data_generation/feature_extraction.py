@@ -3,16 +3,17 @@
 # T: transformation process (normalization)
 # L: Loading of the dataset
 
-from utils_data.Desed import DESED
-from utils_data.DataLoad import DataLoadDf, ConcatDataset
-from utils.Logger import create_logger
-from utils.Transforms import get_transforms
-from utils.Scaler import ScalerPerAudio, Scaler
-import os
 import inspect
 import logging
+import os
 
-# import ipdb
+
+from utils.Logger import create_logger
+from utils.Scaler import Scaler, ScalerPerAudio
+from utils.Transforms import get_transforms
+from utils_data.DataLoad import ConcatDataset, DataLoadDf
+from utils_data.Desed import DESED
+
 
 # Extraction of datasets
 def get_dfs(
@@ -45,49 +46,10 @@ def get_dfs(
         terminal_level=logging.INFO,
     )
 
-    audio_weak_ss = None
-    audio_unlabel_ss = None
-    audio_validation_ss = None
-    audio_synthetic_ss = None
 
-    if separated_sources:
-        audio_weak_ss = path_dict["weak_ss"]
-        audio_unlabel_ss = path_dict["unlabel_ss"]
-        audio_validation_ss = path_dict["validation_ss"]
-        audio_synthetic_ss = path_dict["synthetic_ss"]
-
-    # initialization of the dataset
-    """
-    weak_df = desed_dataset.initialize_and_get_df(
-        tsv_path=path_dict["tsv_path_weak"],
-        audio_dir_ss=audio_weak_ss,
-        nb_files=nb_files,
-        save_features=save_features,
-    )
-
-    unlabel_df = desed_dataset.initialize_and_get_df(
-        tsv_path=path_dict["tsv_path_unlabel"],
-        audio_dir_ss=audio_unlabel_ss,
-        nb_files=nb_files,
-        save_features=save_features,
-    )
-
-    # Event if synthetic not used for training, used on validation purpose
-    
-    synthetic_df = desed_dataset.initialize_and_get_df(
-        tsv_path=path_dict["tsv_path_synth"],
-        audio_dir_ss=audio_synthetic_ss,
-        nb_files=nb_files,
-        download=False,
-        save_features=save_features,
-    )
-    """
-
-    # ipdb.set_trace()
     train_synth_df = desed_dataset.initialize_and_get_df(
         tsv_path=path_dict["tsv_path_train_synth"],
         audio_dir=path_dict["audio_train_synth"],
-        audio_dir_ss=audio_synthetic_ss,
         nb_files=2500 if reduced_dataset else nb_files,
         download=False,
         save_features=save_features,
@@ -96,82 +58,43 @@ def get_dfs(
     valid_synth_df = desed_dataset.initialize_and_get_df(
         tsv_path=path_dict["tsv_path_valid_synth"],
         audio_dir=path_dict["audio_valid_synth"],
-        audio_dir_ss=audio_synthetic_ss,
         nb_files=1000 if reduced_dataset else nb_files,
         download=False,
         save_features=save_features,
     )
 
-    # divide weak label for training and validation
-    # filenames_train = weak_df.filename.drop_duplicates().sample(
-    #   frac=0.9, random_state=26
-    # )
-    # train_weak_df = weak_df[weak_df.filename.isin(filenames_train)]
-    # valid_weak_df = weak_df.drop(train_weak_df.index).reset_index(drop=True)
-
-    # TODO: Make the system already ready for the evaluation set so to make things easier
-    # dev_test dataset
     if eval_dataset:
         validation_df = desed_dataset.initialize_and_get_df(
             tsv_path=path_dict["tsv_path_eval_deded"],
             audio_dir=path_dict["audio_evaluation_dir"],
-            audio_dir_ss=audio_validation_ss,
             nb_files=nb_files,
             save_features=save_features,
         )
-
     else:
         validation_df = desed_dataset.initialize_and_get_df(
             tsv_path=path_dict["tsv_path_valid"],
             audio_dir=path_dict["audio_validation_dir"],
-            audio_dir_ss=audio_validation_ss,
             nb_files=nb_files,
             save_features=save_features,
         )
 
-    # with evaluation dataset
-    # validation_df = desed_dataset.initialize_and_get_df(cfg.eval_desed, audio_dir=cfg.audio_validation_dir,
-    #                                                   audio_dir_ss=audio_validation_ss, nb_files=nb_files,
-    #                                                  save_features=cfg.save_features)
-    # log.info(f"validation_df: {validation_df.head()}")
-
-    # Divide synthetic in train and valid
-    """
-    filenames_train = synthetic_df.filename.drop_duplicates().sample(
-        frac=0.8, random_state=26
-    )
-    train_synth_df = synthetic_df[synthetic_df.filename.isin(filenames_train)]
-    valid_synth_df = synthetic_df.drop(train_synth_df.index).reset_index(drop=True)
-    """
-
     # Put train_synth in frames so many_hot_encoder can work.
     # Not doing it for valid, because not using labels (when prediction) and event based metric expect sec.
+    
+    # ipdb.set_trace()
     # train_synth_df.onset = (
-    #     train_synth_df.onset * sample_rate // hop_size // pooling_time_ratio
+    #      train_synth_df.onset * sample_rate // hop_size // pooling_time_ratio
     # )
     # train_synth_df.offset = (
     #     train_synth_df.offset * sample_rate // hop_size // pooling_time_ratio
     # )
+    
     # log.debug(valid_synth_df.event_label.value_counts())
 
-    """
     data_dfs = {
-        "weak": weak_df,
-        "unlabel": unlabel_df,
-        "synthetic": synthetic_df,
         "train_synthetic": train_synth_df,
         "valid_synthetic": valid_synth_df,
-        "validation": validation_df,  # TODO: Proper name for the dataset
-    }
-    """
-    # new split of data
-    data_dfs = {
-        # "weak": train_weak_df,
-        # "unlabel": unlabel_df,
-        "train_synthetic": train_synth_df,
-        "valid_synthetic": valid_synth_df,
-        # "valid_weak": valid_weak_df,
-        "validation": validation_df,  # TODO: Proper name for the dataset
+        "validation": validation_df,  
     }
 
     return data_dfs
@@ -219,7 +142,7 @@ def get_dataset(
         compute_log=False,
     )
 
-    # Separated sources paramete? # TODO
+    
     dfs = get_dfs(
         path_dict=path_dict,
         sample_rate=sample_rate,
@@ -273,21 +196,12 @@ def get_compose_transforms(
             add_axis=add_axis_conv,
         )
 
-        # weak_data = datasets["weak"]
-        # unlabel_data = datasets["unlabel"]
         train_synth_data = datasets["synthetic"]
-
-        # weak_data.transforms = transforms
-        # unlabel_data.transforms = transforms
         train_synth_data.transforms = transforms
 
         # scaling, only on real data since that's our final goal and test data are real
         scaler_args = []
         scaler = Scaler()
-        # scaler.calculate_scaler(
-        #    ConcatDataset([weak_data, unlabel_data, train_synth_data]),
-        #    ext
-        # )
         scaler.calculate_scaler(ConcatDataset([train_synth_data]), ext)
     else:
         scaler_args = ["global", "min-max"]

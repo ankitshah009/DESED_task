@@ -11,7 +11,6 @@ from pprint import pprint
 import pandas as pd
 import numpy as np
 
-# import ipdb
 
 import torch
 from torch.utils.data import DataLoader
@@ -190,7 +189,6 @@ if __name__ == "__main__":
     logger.info(f"Model selected: {model_type}")
     logger.info(
         f"Evaluation: {config_params.evaluation}, save_features: {config_params.save_features}"
-        ""
     )
     logger.info(f"Dataset type: {config_params.dataset}")
 
@@ -215,7 +213,7 @@ if __name__ == "__main__":
     dataset, dfs = get_dataset(
         base_feature_dir=os.path.join(
             config_params.workspace, "data", "features"
-        ),  # should be set a default one?
+        ), 
         path_dict=config_params.get_folder_path(),
         sample_rate=config_params.sample_rate,
         n_window=config_params.n_window,
@@ -236,38 +234,6 @@ if __name__ == "__main__":
     )
 
     # encod_func = many_hot_encoder.encode_strong_df
-
-    """
-    weak_data = DataLoadDf(
-        df=dfs["weak"],
-        encode_function=encod_func,
-        sample_rate=config_params.sample_rate,
-        n_window=config_params.n_window,
-        hop_size=config_params.hop_size,
-        n_mels=config_params.n_mels,
-        mel_f_min=config_params.mel_f_min,
-        mel_f_max=config_params.mel_f_max,
-        compute_log=config_params.compute_log,
-        save_features=config_params.save_features,
-        filenames_folder=os.path.join(config_params.audio_train_folder, "weak"),
-    )
-
-    unlabel_data = DataLoadDf(
-        df=dfs["unlabel"],
-        encode_function=encod_func,
-        sample_rate=config_params.sample_rate,
-        n_window=config_params.n_window,
-        hop_size=config_params.hop_size,
-        n_mels=config_params.n_mels,
-        mel_f_min=config_params.mel_f_min,
-        mel_f_max=config_params.mel_f_max,
-        compute_log=config_params.compute_log,
-        save_features=config_params.save_features,
-        filenames_folder=os.path.join(
-            config_params.audio_train_folder, "unlabel_in_domain"
-        ),
-    )
-    """
 
     if config_params.year == "2021":
         train_synth_data = DataLoadDf(
@@ -299,16 +265,15 @@ if __name__ == "__main__":
         )
 
     training_dataset = {
-        # "weak": weak_data,
-        # "unlabel": unlabel_data,
         "synthetic": train_synth_data,
     }
 
-    ratio = (
-        float(config_params.sample_rate)
-        / float(config_params.hop_size)
-        / float(config_params.pooling_time_ratio)
-    )
+    encode_label_kwargs = {
+            "many_hot_encoder": many_hot_encoder,
+            "encode_type": "strong",
+            "ratio_s_to_frames": config_params.ratio,
+        }
+
 
     transforms, transforms_valid, scaler, scaler_args = get_compose_transforms(
         datasets=training_dataset,
@@ -316,21 +281,14 @@ if __name__ == "__main__":
         max_frames=config_params.max_frames,
         add_axis_conv=config_params.add_axis_conv,
         noise_snr=config_params.noise_snr,
-        encode_label_kwargs={
-            "many_hot_encoder": many_hot_encoder,
-            "encode_type": "strong",
-            "ratio_s_to_frames": ratio,
-        },
+        encode_label_kwargs=encode_label_kwargs,
         ext=dataset_type + "_" + ext,
     )
 
-    # weak_data.transforms = transforms
-    # unlabel_data.transforms = transforms
+    
     train_synth_data.transforms = transforms
-
-    # weak_data.in_memory = config_params.in_memory
     train_synth_data.in_memory = config_params.in_memory
-    # unlabel_data.in_memory = config_params.in_memory_unlab
+    
 
     if config_params.year == "2021":
         valid_synth_data = DataLoadDf(
@@ -367,47 +325,6 @@ if __name__ == "__main__":
             ),
         )
 
-    """
-    valid_weak_data = DataLoadDf(
-        df=dfs["valid_weak"],
-        encode_function=encod_func,
-        transforms=transforms_valid,
-        return_indexes=True,
-        in_memory=config_params.in_memory,
-        sample_rate=config_params.sample_rate,
-        n_window=config_params.n_window,
-        hop_size=config_params.hop_size,
-        n_mels=config_params.n_mels,
-        mel_f_min=config_params.mel_f_min,
-        mel_f_max=config_params.mel_f_max,
-        compute_log=config_params.compute_log,
-        save_features=config_params.save_features,
-        filenames_folder=os.path.join(config_params.audio_train_folder, "weak"),
-    )
-
-    """
-    # logger.debug(
-    #    f"len synth: {len(train_synth_data)}, len_unlab: {len(unlabel_data)}, len weak: {len(weak_data)}"
-    # )
-
-    # get batch sizes and label masks depending on if synthetic data are used or not
-    # weak_mask, strong_mask, batch_sizes = get_batchsizes_and_masks(
-    #    no_synthetic, config_params.batch_size
-    # )
-
-    # concatenate dataset list depending on if synthetic data are used or not
-    # concat_dataset = (
-    #    ConcatDataset([weak_data, unlabel_data])
-    #    if no_synthetic
-    #    else ConcatDataset([weak_data, unlabel_data, train_synth_data])
-    # )
-
-    # concat_dataset = (
-    #    ConcatDataset([train_synth_data])
-    # )
-
-    # sampler = MultiStreamBatchSampler(concat_dataset, batch_sizes=batch_sizes)
-
     training_loader = DataLoader(
         dataset=train_synth_data,
         batch_size=config_params.batch_size,
@@ -419,12 +336,6 @@ if __name__ == "__main__":
         batch_size=config_params.batch_size,
         num_workers=config_params.num_workers,
     )
-
-    # valid_weak_loader = DataLoader(
-    #    dataset=valid_weak_data,
-    #    batch_size=config_params.batch_size,
-    #    num_workers=config_params.num_workers,
-    # )
 
     # ####################################
     # INITIALIZATION OF MODELS
@@ -448,10 +359,9 @@ if __name__ == "__main__":
 
     optimizer = get_optimizer(model, config_params.optim, **config_params.optim_kwargs)
 
-    # TODO: This could also be a class inside this same main file maybe?
     state = set_state(
-        model=model,  # to change
-        model_ema=model_ema,  # to change
+        model=model, 
+        model_ema=model_ema, 
         optimizer=optimizer,
         dataset=dataset,
         pooling_time_ratio=config_params.pooling_time_ratio,
@@ -459,7 +369,7 @@ if __name__ == "__main__":
         scaler=scaler,
         scaler_args=scaler_args,
         median_window=config_params.median_window,
-        model_kwargs=kw_args,  # to change
+        model_kwargs=kw_args,  
         optim_kwargs=config_params.optim_kwargs,
     )
 
@@ -497,8 +407,6 @@ if __name__ == "__main__":
                 n_epoch_rampup=config_params.n_epoch_rampup,
                 max_learning_rate=config_params.max_learning_rate,
                 ema_model=model_ema,
-                # mask_weak=weak_mask,
-                # mask_strong=strong_mask,
                 adjust_lr=config_params.adjust_lr,
             )
 
@@ -630,11 +538,7 @@ if __name__ == "__main__":
     model.eval()
 
     transforms_valid = get_transforms(
-        encode_label_kwargs={
-            "many_hot_encoder": many_hot_encoder,
-            "encode_type": "strong",
-            "ratio_s_to_frames": ratio,
-        },
+        encode_label_kwargs=encode_label_kwargs,
         frames=config_params.max_frames,
         scaler=scaler,
         add_axis=config_params.add_axis_conv,

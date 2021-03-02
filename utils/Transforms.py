@@ -5,6 +5,8 @@ import numpy as np
 import torch
 
 
+
+
 class Transform:
     def transform_data(self, data):
         # Mandatory to be defined by subclasses
@@ -297,6 +299,7 @@ class EncodeLabel(Transform):
 
         if len(label) > 0:
             new_label = label.copy()
+            
             new_label.onset = (new_label.onset * self.ratio_s_to_frames).round()
 
             new_label.offset = (new_label.offset * self.ratio_s_to_frames).round()

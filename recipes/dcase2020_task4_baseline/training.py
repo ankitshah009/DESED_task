@@ -312,7 +312,6 @@ def train(
         elif optimizer_type == "ra":
 
             if c_epoch % 100 == 0 and c_epoch > 0:
-                # log.info("Multiply lr * 0.1")
                 adjust_learning_rate_ra(optimizer, max_learning_rate)
 
         meters.update("lr", optimizer.param_groups[0]["lr"])

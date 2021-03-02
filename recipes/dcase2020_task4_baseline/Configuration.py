@@ -21,7 +21,7 @@ class Configuration:
         """
         self.workspace = workspace
         self.year = "2021"
-        self.dataset = "unbalanced"
+        self.dataset = "target_only"
 
         ######################
         # DESED dataset paths
@@ -39,22 +39,16 @@ class Configuration:
         self.synthetic = os.path.join(
             self.metadata_train_folder, "synthetic20/soundscapes.tsv"
         )
+        
         if self.year == "2020":
             self.train_synth = os.path.join(
                 self.metadata_train_folder, "synthetic20_train/soundscapes.tsv"
             )
-        else:
+        #else:
             # self.train_synth = os.path.join(
             # self.metadata_train_folder, "synthetic2021_train/soundscapes.csv"
             # )
-            if self.dataset == "target_only":
-                self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/metadata/train/synthetic21_train/soundscapes.tsv"
-            elif self.dataset == "balanced":
-                self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/metadata/train/synthetic21_train/soundscapes.tsv"
-            elif self.dataset == "unbalanced":
-                self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/metadata/train/synthetic21_train/soundscapes.tsv"
-            else:
-                raise NotImplementedError(f"Datset not valid")
+            
         # validation dataset metadata paths
         self.validation = os.path.join(self.metadata_valid_folder, "validation.tsv")
 
@@ -63,19 +57,10 @@ class Configuration:
             self.valid_synth = os.path.join(
                 self.metadata_valid_folder, "synthetic20_validation/soundscapes.tsv"
             )
-        else:
+        #else:
             # self.valid_synth = os.path.join(
             #    self.metadata_valid_folder, "synthetic2021_validation/validation.csv"
-            #    )
-            if self.dataset == "target_only":
-                self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/metadata/validation/synthetic21_validation/soundscapes.tsv"
-            elif self.dataset == "balanced":
-                self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/metadata/validation/synthetic21_validation/soundscapes.tsv"
-            elif self.dataset == "unbalanced":
-                self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/metadata/validation/synthetic21_validation/soundscapes.tsv"
-            else:
-                raise NotImplementedError(f"Datset not valid")
-
+            
         # 2018 dataset metadata path
         self.test2018 = os.path.join(self.metadata_valid_folder, "test_dcase2018.tsv")
         self.eval2018 = os.path.join(self.metadata_valid_folder, "eval_dcase2018.tsv")
@@ -89,32 +74,12 @@ class Configuration:
         self.audio_train_folder = os.path.join(self.audio_folder, "train")
         self.audio_valid_folder = os.path.join(self.audio_folder, "validation")
         self.audio_eval_folder = os.path.join(self.audio_folder, "eval/public")
-        # to check
-        if self.year == "2020":
-            self.audio_valid_synth = os.path.join(
-                self.audio_train_folder, "synthetic20_validation/soundscapes"
-            )
-        else:
-            # self.audio_valid_synth = os.path.join(
-            #    self.audio_train_folder, "synthetic2021_validation/soundscapes"
-            # )
-            if self.dataset == "target_only":
-                self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/audio/validation/synthetic21_validation/soundscapes"
-            elif self.dataset == "balanced":
-                self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/audio/validation/synthetic21_validation/soundscapes"
-            elif self.dataset == "unbalanced":
-                self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/audio/validation/synthetic21_validation/soundscapes"
-            else:
-                raise NotImplementedError(f"Datset not valid")
 
-        if self.dataset == "target_only":
-            self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/audio/train/synthetic21_train/soundscapes"
-        elif self.dataset == "balanced":
-            self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/audio/train/synthetic21_train/soundscapes"
-        elif self.dataset == "unbalanced":
-            self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/audio/train/synthetic21_train/soundscapes"
-        else:
-            raise NotImplementedError(f"Datset not valid")
+        # if self.year == "2020":
+        #     self.audio_valid_synth = os.path.join(
+        #         self.audio_train_folder, "synthetic20_validation/soundscapes"
+        #     )
+        # else:
 
         # Source separation dataset path
         self.weak_ss = os.path.join(self.audio_train_folder, "weak")
@@ -139,10 +104,7 @@ class Configuration:
         # storing directories paths
         self.exp_out_path = os.path.join(
             self.workspace, "exp_out"
-        )  # would be the stored_data folder
-        # store_dir = os.path.join(exp_out_path, "MeanTeacher" + add_dir_model_name)
-        # saved_model_dir = os.path.join(store_dir, "model")
-        # saved_pred_dir = os.path.join(store_dir, "predictions")
+        ) 
 
         self.save_features = False
 
@@ -167,6 +129,8 @@ class Configuration:
         )
         self.mel_f_min = 0.0
         self.mel_f_max = 8000.0
+        self.pooling_time_ratio = 4 # 2 * 2
+        self.ratio = float(self.sample_rate) / float(self.hop_size) / float(self.pooling_time_ratio)
 
         # Classes
         self.file_path = os.path.abspath(os.path.dirname(__file__))
@@ -236,8 +200,7 @@ class Configuration:
             "conv_block_ks": 7,
         }
 
-        # 2 * 2
-        self.pooling_time_ratio = 4
+       
         self.out_nb_frames_1s = (
             self.sample_rate / self.hop_size / self.pooling_time_ratio
         )
@@ -253,7 +216,6 @@ class Configuration:
         self.in_memory_unlab = False
         self.num_workers = 8
         self.batch_size = 24
-        # self.batch_size = 126
         self.noise_snr = 30
 
         self.n_epoch = 200
@@ -278,8 +240,30 @@ class Configuration:
         # Logger
         self.terminal_level = logging.INFO
 
-        # Evaluatin dataset information
+        # Evaluation dataset information
         self.evaluation = False
+
+        self.set_folder_path()
+
+    def set_folder_path(self):
+        if self.dataset == "target_only":
+            self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/audio/validation/synthetic21_validation/soundscapes"
+            self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/audio/train/synthetic21_train/soundscapes"
+            self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/metadata/validation/synthetic21_validation/soundscapes.tsv"
+            self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_target_only/metadata/train/synthetic21_train/soundscapes.tsv"
+        elif self.dataset == "balanced":
+            self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/audio/validation/synthetic21_validation/soundscapes"
+            self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/audio/train/synthetic21_train/soundscapes"
+            self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/metadata/validation/synthetic21_validation/soundscapes.tsv"
+            self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_balanced/metadata/train/synthetic21_train/soundscapes.tsv"
+        elif self.dataset == "unbalanced":
+            self.audio_valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/audio/validation/synthetic21_validation/soundscapes"
+            self.audio_train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/audio/train/synthetic21_train/soundscapes"
+            self.valid_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/metadata/validation/synthetic21_validation/soundscapes.tsv"
+            self.train_synth = "/srv/storage/talc3@talc-data.nancy/multispeech/calcul/users/nturpault/code/desed_dev/data/dcase2021/dataset_unbalanced/metadata/train/synthetic21_train/soundscapes.tsv"
+        else:
+            raise NotImplementedError(f"Dataset not valid")
+        
 
     def get_folder_path(self):
         """
@@ -308,3 +292,5 @@ class Configuration:
             tsv_path_valid_synth=self.valid_synth,
         )
         return path_dict
+    
+
